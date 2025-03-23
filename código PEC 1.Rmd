@@ -1,0 +1,90 @@
+---
+title: "Primera prueba de evaluación continua"
+subtitle: "Prueba de evaluación continua 1"
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+author: "Jesús Castro Puntero"
+output:
+  # github_document:
+  #   toc: yes
+  pdf_document:
+    keep_tex: yes
+    toc: yes
+# params:
+# bibliography:
+# Fuente formateo títulos, autor y date, para centrarlos en el documento: https://stackoverflow.com/questions/43404487/how-do-i-center-my-yaml-heading-in-an-r-markdown-html-document
+---
+
+<style type="text/css">
+
+h1.title {
+  font-size: 24px;
+  text-align: center;
+}
+
+h3.subtitle {
+  font-size: 24px;
+  text-align: center;
+}
+
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  text-align: center;
+}
+
+h4.author { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+  text-align: center;
+}
+
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NULL)
+```
+
+```{r load_libraries, include=FALSE}
+
+```
+
+
+
+# Abstract 
+Breve resumen sobre el proceso y los principales resultados. (150 palabras)
+
+# Objetivos
+Los objetivos de vuestro trabajo deben ser breves, claros y bien definidos. (1/2 página)
+
+# Métodos
+Con qué habéis trabajado. Variará según el caso, pero
+habitualmente contendrá: origen (fuente) y naturaleza (tipo) de los datos,
+metodología empleada, herramientas estadísticas y bioinformáticas
+utilizadas, procedimiento general de análisis, etc. (1-2 páginas)
+
+# Resultados
+Los resultados deben responder a las preguntas planteadas. A
+menudo estas son abiertas (ej. “Exploración de los datos”) o admiten distintas
+interpretaciones, así que podéis ser flexibles; pero explicad siempre por qué
+hacéis lo que hacéis. Ante la duda, consultad los materiales y ejemplos de
+referencia.
+Las mejores herramientas para redactar el informe son Rmarkdown o Quarto
+1
+, que permiten generar documentos que integran código, análisis, resultados
+y explicaciones, y que son habitualmente utilizadas en entornos profesionales
+en bioinformática.
+Es importante que vuestro informe no sea un volcado de código y salidas de R
+con apenas explicaciones, debe de ser un texto legible y fácil de seguir.
+Ayudaos de tablas, figuras (con sus correspondientes pies) y, si es necesario,
+código para acompañar vuestras explicaciones. (4-5 páginas)
+
+# Discusión
+Es importante que reflexionéis sobre las limitaciones del estudio y
+sobre el trabajo que habéis realizado, en el contexto del problema biológico de
+interés que aborda la PEC. (1 página)
+
+# Conclusiones
+Concisas, claras y extraídas de vuestro análisis. (1/2 página)
+
+# Referencias
+Aquí debéis incluir un enlace al repositorio de GitHub que
+contiene el código que habéis utilizado para abordar el análisis (debidamente
+comentado).
