@@ -12,8 +12,13 @@ output:
 # params:
 # bibliography:
 # Fuente formateo títulos, autor y date, para centrarlos en el documento: https://stackoverflow.com/questions/43404487/how-do-i-center-my-yaml-heading-in-an-r-markdown-html-document
+bibliography: BibliographyAO_PEC1.bib
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
+```{=html}
 <style type="text/css">
 
 h1.title {
@@ -37,54 +42,168 @@ h4.author { /* Header 4 - and the author and data headers use this too  */
 }
 
 </style>
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment = NULL)
 ```
 
 ```{r load_libraries, include=FALSE}
-
+library(metabolomicsWorkbenchR)
+library(structToolbox) # con pmp
+library(ggplot2)
+library(SummarizedExperiment)
+library(readxl)
+library(POMA)
 ```
 
+# Abstract
 
-
-# Abstract 
-Breve resumen sobre el proceso y los principales resultados. (150 palabras)
+Breve resumen sobre el proceso y los principales resultados. (150
+palabras)
 
 # Objetivos
-Los objetivos de vuestro trabajo deben ser breves, claros y bien definidos. (1/2 página)
+
+En esta PEC ejecutaremos un análisis exploratorio de los datos del estudio LC-MS Based Approaches to Investigate Metabolomic Differences in the Urine of Young Women after Drinking Cranberry Juice or Apple Juice. Este estudio tiene como objetivo principal investigar los cambios metabólicos generales inducidos por la ingesta de concentrados de procianidinas provenientes de zumo de arándanos y zumo de manzana. Para ello, se utilizó un enfoque metabolómico basado en cromatografía líquida y espectrometría de masas (LC-MS), que permite una visión global de los metabolitos presentes en las muestras biológicas [@a2025_nci].
+
+Tipo de estudio
+
+Las procianidinas son un grupo importante de moléculas bioactivas conocidas por sus beneficios para la salud humana, mostrando un gran potencial en el tratamiento de enfermedades metabólicas crónicas como el cáncer, la diabetes y las enfermedades cardiovasculares, ya que previenen el daño celular relacionado con el estrés oxidativo [@valenciahernandez_2021_procyanidins].  Estudios como los de [@liu_2022_procyanidins] y [@gonzalezabuin_2015_procyanidins] apoyan esta idea, sugiriendo que las procianidinas tienen efectos beneficiosos en la mejora a la resistencia a la insulina y la regulación de la glucosa, en parte a través de la modulación de la microbiota intestinal y la inhibición de vías inflamatorias.
+
+Conocer el comportamiento y la absorción de estas moléculas es, entonces, de gran importancia dado su efecto en la salud humana y su amplia disponibilidad como residuo de productos agro-industriales [@valenciahernandez_2021_procyanidins]. El objetivo de este documento será realizar una exploración inicial de los datos, enfocada dentro del proceso de análisis de datos ómicos,
+
+Qué queda fuera del marco de este documento
+
 
 # Métodos
-Con qué habéis trabajado. Variará según el caso, pero
-habitualmente contendrá: origen (fuente) y naturaleza (tipo) de los datos,
-metodología empleada, herramientas estadísticas y bioinformáticas
-utilizadas, procedimiento general de análisis, etc. (1-2 páginas)
+
+Con qué habéis trabajado. Variará según el caso, pero habitualmente
+contendrá: origen (fuente) y naturaleza (tipo) de los datos, metodología
+empleada, herramientas estadísticas y bioinformáticas utilizadas,
+procedimiento general de análisis, etc. (1-2 páginas)
 
 # Resultados
-Los resultados deben responder a las preguntas planteadas. A
-menudo estas son abiertas (ej. “Exploración de los datos”) o admiten distintas
-interpretaciones, así que podéis ser flexibles; pero explicad siempre por qué
-hacéis lo que hacéis. Ante la duda, consultad los materiales y ejemplos de
-referencia.
-Las mejores herramientas para redactar el informe son Rmarkdown o Quarto
-1
-, que permiten generar documentos que integran código, análisis, resultados
-y explicaciones, y que son habitualmente utilizadas en entornos profesionales
-en bioinformática.
-Es importante que vuestro informe no sea un volcado de código y salidas de R
-con apenas explicaciones, debe de ser un texto legible y fácil de seguir.
-Ayudaos de tablas, figuras (con sus correspondientes pies) y, si es necesario,
+
+Los resultados deben responder a las preguntas planteadas. A menudo
+estas son abiertas (ej. “Exploración de los datos”) o admiten distintas
+interpretaciones, así que podéis ser flexibles; pero explicad siempre
+por qué hacéis lo que hacéis. Ante la duda, consultad los materiales y
+ejemplos de referencia. Las mejores herramientas para redactar el
+informe son Rmarkdown o Quarto
+
+, que permiten generar documentos que integran código, análisis,
+resultados y explicaciones, y que son habitualmente utilizadas en
+entornos profesionales en bioinformática. Es importante que vuestro
+informe no sea un volcado de código y salidas de R con apenas
+explicaciones, debe de ser un texto legible y fácil de seguir. Ayudaos
+de tablas, figuras (con sus correspondientes pies) y, si es necesario,
 código para acompañar vuestras explicaciones. (4-5 páginas)
 
 # Discusión
+
 Es importante que reflexionéis sobre las limitaciones del estudio y
-sobre el trabajo que habéis realizado, en el contexto del problema biológico de
-interés que aborda la PEC. (1 página)
+sobre el trabajo que habéis realizado, en el contexto del problema
+biológico de interés que aborda la PEC. (1 página)
 
 # Conclusiones
+
 Concisas, claras y extraídas de vuestro análisis. (1/2 página)
 
 # Referencias
-Aquí debéis incluir un enlace al repositorio de GitHub que
-contiene el código que habéis utilizado para abordar el análisis (debidamente
+
+Aquí debéis incluir un enlace al repositorio de GitHub que contiene el
+código que habéis utilizado para abordar el análisis (debidamente
 comentado).
+
+<https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Study&StudyID=ST000291>
+
+# Actual Work
+
+```{r PEC 1}
+
+
+# Utilizamos la librería readxl para cargar el excel con las distintas hojas.
+
+
+# Con las features y el target podremos generar el objeto SummarizedExperiment utilizando POMA
+features <- read_excel("ST000291curated.xlsx", sheet = "features")
+target <- read_excel("ST000291curated.xlsx", sheet = "metadata")
+
+# En metabolite_names tenemos la información de las filas
+metabolite_names <- read_excel("ST000291curated.xlsx", sheet = "metaboliteNames_ord")
+
+# Eliminamos la primera columna de los datos cargados en features, que hace referencia a la ID de PubChem, información que tendremos en rowData
+features<-features[,-1]
+
+# Generamos el objeto SE utilizando la función de POMA
+# Nótese que tenemos que transponer features para encajar con el formato esperado de la función
+se <- PomaCreateObject(metadata = target, features = t(features))
+
+# Añadimos la información de los metabolitos en rowData, previamente ordanadas
+rowData(se)<-as.data.frame(metabolite_names)
+
+# Eliminamos las importaciones para liberar memoria
+rm(features)
+rm(metabolite_names)
+rm(target)
+
+
+# Generaremos el objeto SE og_se, proviniente del análisis original para recuperar los metadatos
+og_se = do_query(
+    context = 'study',
+    input_item = 'study_id',
+    input_value = 'ST000291',
+    output_item = 'SummarizedExperiment' # or 'DatasetExperiment'
+)
+
+# Seleccionamos uno de los dos análisis que contiene el estudio
+og_se1<-og_se$AN000464
+
+# Configuramos los metadatos de nuestro se, que integra ambos análisis del estudio ST000291
+metadata(se)$data_source<-metadata(og_se1)$data_source
+metadata(se)$study_id<-metadata(og_se1)$study_id
+metadata(se)$analysis_id<-"AN000464 and AN000465"
+metadata(se)$analysis_summary<-"ESI Negative mode and ESI Negative mode"
+metadata(se)$units<-metadata(og_se1)$units
+metadata(se)$description<-metadata(og_se1)$description
+
+# Curamos los datos de nuestro SE mediante la función PomaImpute
+imp_se <- se %>%PomaImpute(zeros_as_na = FALSE, # Los 0 no son NA
+                remove_na = TRUE, # Eliminamos features con más de un/ 
+                cutoff = 20, #      /20% de valores perdidos (cutoff)
+                group_by = FALSE,
+                method = "knn")
+
+# Curamos los datos de nuestro SE mediante la función PomaImpute
+imp_se <- se %>%PomaImpute(zeros_as_na = FALSE, # Los 0 no son NA
+                remove_na = TRUE, # Eliminamos features con más de un/ 
+                cutoff = 20, #      /20% de valores perdidos (cutoff)
+                group_by = TRUE, 
+                method = "knn") # Imputamos a los valores perdidos según                                   el algoritmo de knn
+
+
+# Generamos gráficos
+norm_se <- imp_se %>% PomaNorm(method = "log_pareto")
+# PomaBoxplots(imp_se, x = "samples")
+# PomaBoxplots(norm_se, x = "samples")
+# PomaDensity(imp_se, x = "samples")
+# PomaDensity(norm_se, x = "samples")
+# PomaOutliers(normalized)$polygon_plot
+
+
+# Análisis PCA
+poma_pca<-PomaPCA(
+imp_se,
+outcome = NULL,
+center = TRUE,
+scale = TRUE,
+ncomp = 20,
+labels = FALSE,
+ellipse = FALSE,
+load_length = 1
+)
+
+# Gráfico PCA
+poma_pca$factors_plot
+
+```
