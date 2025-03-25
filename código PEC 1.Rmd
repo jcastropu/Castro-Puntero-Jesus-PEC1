@@ -137,7 +137,7 @@ features<-features[,-1]
 
 # Generamos el objeto SE utilizando la función de POMA
 # Nótese que tenemos que transponer features para encajar con el formato esperado de la función
-se <- PomaCreateObject(metadata = target, features = t(features))
+se <- PomaCreateObject(metadata = target, features = t(features))ss
 
 # Añadimos la información de los metabolitos en rowData, previamente ordanadas
 rowData(se)<-as.data.frame(metabolite_names)
