@@ -4,18 +4,19 @@ subtitle: "Prueba de evaluación continua 1"
 date: '`r format(Sys.Date(),"%e de %B, %Y")`'
 author: "Jesús Castro Puntero"
 output:
-  # github_document:
-  #   toc: yes
-  pdf_document:
-    keep_tex: yes
+  github_document:
     toc: yes
-  geometry: margin=1in
+  # pdf_document:
+  #   keep_tex: yes
+  #   toc: yes
 # params:
-# Fuente formateo títulos, autor y date, para centrarlos en el documento: https://stackoverflow.com/questions/43404487/how-do-i-center-my-yaml-heading-in-an-r-markdown-html-document
 bibliography: BibliographyAO_PEC1.bib
-csl: ieee.csl
+csl: ieee.csl # Fuente: https://www.zotero.org/styles?q=ieee
 link-citations: true
+
+# Fuente formateo títulos, autor y date, para centrarlos en el documento: https://stackoverflow.com/questions/43404487/how-do-i-center-my-yaml-heading-in-an-r-markdown-html-document
 ---
+
 
 ```{=html}
 <style type="text/css">
@@ -44,25 +45,30 @@ h4.author { /* Header 4 - and the author and data headers use this too  */
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment = NULL)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+options(width = 60)  # Ajustamos el ancho de salida del código
+
+# Fuente: https://github.com/rstudio/rmarkdown/issues/646
 ```
 
 ```{r load_libraries, include=FALSE}
 library(metabolomicsWorkbenchR)
 library(ggplot2)
+library(patchwork)
 library(SummarizedExperiment)
 library(readxl)
 library(POMA)
+library(dplyr) # para pull()
+library(knitr) # para kable()
 ```
 
-# Abstract
+# 1. Abstract
 
 Breve resumen sobre el proceso y los principales resultados. (150
 palabras)
 
-\newpage
 
-# Objetivos
+# 2. Objetivos
 
 En esta PEC ejecutaremos un análisis exploratorio de los datos del estudio LC-MS Based Approaches to Investigate Metabolomic Differences in the Urine of Young Women after Drinking Cranberry Juice or Apple Juice (ID del estudio: ST000291). Este estudio tiene como objetivo principal investigar los cambios metabólicos generales inducidos por la ingesta de concentrados de procianidinas provenientes de zumo de arándanos y zumo de manzana. Para ello, se utilizó un enfoque metabolómico basado en cromatografía líquida y espectrometría de masas (LC-MS), que permite una visión global de los metabolitos presentes en las muestras biológicas [@a2025_nci]. Este trabajo de la Universidad de Florida es un caso de estudio comparativo o de expresión diferencial ya que su objetivo es buscar las diferencias entre los perfiles metabólicos provenientes de los dos tipos de zumo.
 
@@ -73,7 +79,7 @@ Conocer el comportamiento y la absorción de estas moléculas puede ser de gran 
 Queda fuera del alcance de este documento la identificación de metabolitos relacionados con las rutas metabólicas derivadas de la ingesta de los zumos, así como análisis exploratorios más detallados o la corrección de los posibles errores en la obtención de los datos crudos.
 
 
-# Métodos
+# 3. Métodos
 
 Para la obtención de las muestras biológicas se reclutaron 18 mujeres universitarias sanas (21-29 años, IMC 18.5-25) y se aplicó un protocolo para la obtención de las muestras biológicas. Durante los primeros seis días, las participantes evitaron alimentos ricos en procianidinas. El séptimo día, tras un ayuno nocturno, se recogieron muestras basales de orina.  Las participantes fueron asignadas aleatoriamente en dos grupos (n=9) para consumir zumo de arándano o de manzana durante tres días (días 7-9). El décimo día, tras un nuevo ayuno nocturno, se recogieron muestras de orina. Tras un período de lavado de dos semanas, las participantes cambiaron al otro tipo de zumo y repitieron el protocolo. Se excluyeron tres participantes del análisis: una por falta de asistencia y dos por no proporcionar muestras de orina. Cabe destacar que, aunque en el estudio se menciona la obtención de muestras biológicas de plasma incluidas dentro de el protocolo, no se publicaron los datos relativos al análisis de las mismas.
 
@@ -84,15 +90,15 @@ Previo al trabajo de este documento, los nombres de los metabolitos han sido ide
 Para el posterior análisis, se usarán principalmente el paquete POMA [@a2025_poma] que nos permitirá construir objetos de `SummarizedExperiment` y aplicar métodos predefinidos para la elaboración de análisis y gráficos. También recalcamos la importancia del paquete metabolomicsWorkbenchR [@metabolomicsworkbenchr_2025] que nos permite recuperar, entre otros, la información de los metadatos del análisis original. Al final del documento se muestra en detalle el conjunto de paquetes usados para ejecución del código.
 
 
-# Resultados
+# 4. Resultados
 
-## Carga del objeto `SummarizedExperiment`
+## 4.1 Carga del objeto `SummarizedExperiment`
 
 Como se ha comentado en el apartado anterior, para llevar a cabo nuestra exploración de los datos, utilizaremos principalmente el paquete POMA, que facilitirá en gran medida la generación de gráficos y estadísticas de los mismos.
 
 En primer lugar, será necesario cargar los datos del archivo facilitado 'ST000291curated.xlsx' y generar un objeto `SummarizedExperiment` para poder aplicar las funciones destinadas a ese objeto.
 
-```{r Carga del archivo}
+```{r Carga del archivo, echo=FALSE}
 
 # Utilizamos la librería "readxl" para cargar el excel con las distintas hojas, previamente cargada en el primer chunk del documento.
 
@@ -109,17 +115,19 @@ features<-features[,-1]
 
 Una vez cargados los datos y almacenados en las distintas variables, podemos utilizar la función de `PomaCreateObject()` para generar el objeto `SummarizedExperiment` que, al igual que los objetos `ExpressionSet`, son un tipo de estructura de datos utilizadas en R para almacenar y manipular datos ómicos y metadatos relacionados. Ambas pertenecen a diferentes paquetes de Bioconductor, pero mientras `ExpressionSet` solo permite una matriz de datos en cada objeto, `SummarizedExperiment` puede tener múltiples matrices, las cuales pueden ser accedidas a través de `assays()`. Además, el uso de las funciones y objetos relacionadas con el paquete `SummarizedExperiment`, permite el uso de muchos otros paquetes más modernos desarrollados con métodos enfocados con esta estructura de datos. Como veremos a continuación, los métodos relacionados con el acceso a la información mostrados en la Figura 1, difieren de los utilizados para los `ExpressionSet`.
 
-![Estructura de datos de un `SummarizedExperiment` Morgan M. 2023 https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html](figura_summarizedexperiment.jpg){width=400 height=400px}
+![Estructura de datos de un `SummarizedExperiment` Morgan M. 2023 https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html](figura_summarizedexperiment.jpg){width=300 height=300px}
 
 ```{r Crear SummarizedExperiment}
 # Generamos el objeto SE utilizando la función incluida en la librería POMA
 
 # Nótese que tenemos que transponer features para encajar con el formato esperado de la función
-se <- PomaCreateObject(metadata = target, features = t(features))
-
+se <- PomaCreateObject(metadata = target, features = t(features), group)
+```
+```{r metabolites, echo=FALSE}
 # Añadimos la información de los metabolitos en rowData, previamente ordanadas
 rowData(se)<-as.data.frame(metabolite_names)
-
+```
+```{r rm, echo=FALSE}
 # Eliminamos las importaciones para liberar memoria
 rm(features)
 rm(metabolite_names)
@@ -149,12 +157,14 @@ metadata(se)$analysis_summary<-"ESI Negative mode and ESI Negative mode"
 metadata(se)$units<-metadata(og_se1)$units
 metadata(se)$description<-metadata(og_se1)$description
 
+```
+```{r rm2, echo=FALSE}
 # Finalmente, podemos eliminar los datos originales de metabolomicsWorkbenchR
 rm(og_se1)
 rm(og_se)
 ```
 
-## Análisis de la estructura de datos
+## 4.2 Análisis de la estructura de datos
 
 En primer lugar, nos fijamos en las dimensiones de la matriz de datos cargada para verificar que el número de muestras es correcto.
 
@@ -179,31 +189,34 @@ Tal y como se ha mencionado más arriba, las funciones para acceder a la informa
 ```{r colData}
 # Mostramos las muestras biológicas en cada nivel de tratamiento
 summary(colData(se)$Treatment)
+```
 
+```{r more info, echo=FALSE}
 # Mostramos el nombre de las muestras y su asociación con los factores
-colData(se)
+# colData(se)
 ```
 
 Por otro lado, con `rowData()` podremos acceder a la información relativa a las filas, es decir, a los metabolitos. Aquí, gracias al trabajo previo de webscrapping mencionado en el apartado de métodos, tenemos identificado el nombre y el ID de PubChem y de KEGG de cada uno de los 1541 metabolitos.
 
 ```{r rowData}
 # Mostramos la información cargada de los metabolitos
-rowData(se)
+head(rowData(se))
 ```
 
-Con la función `metadata()` podemos acceder a la información relativa al estudio previamente cargada
+Con la función `metadata()` podemos acceder a la información relativa al estudio previamente cargada, como el origen de los datos o las unidades:
 
 ```{r metadata}
-metadata(se)
+metadata(se)$data_source
+metadata(se)$units
 ```
 
-## Análisis exploratorio inicial de los datos
+## 4.3 Análisis exploratorio inicial de los datos
 
-El análisis de estudios ómicos suele estar caracterizado por una alta dimensionalidad en los datos, lo que puede dificultar la comprensión a través de resúmenes estadísticos donde se muestren todos los componentes de cada muestra. Para proceder, en primer lugar deberemos
+El análisis de estudios ómicos suele estar caracterizado por una alta dimensionalidad en los datos, lo que puede dificultar la comprensión a través de resúmenes estadísticos donde se muestren todos los componentes de cada muestra. Para proceder, en primer lugar deberemos eliminar la presencia de errores faltantes ya que puede comprometr la calidad de las métricas estadísticas o inutilizar el uso de muchas funciones.
 
-1 NAs -> imputacion
+### 4.3.1 Imputación de valores faltantes
 
-2 Explicacion imputacion
+Para llevar a cabo la imputación de valores en lugares de la matriz de datos con valores faltantes, usaremos a cabo la función `PomaImute` de la librería `POMA`. A través de los parámetros de opciones del método, podemos elegir que no trate a los 0 como valores faltantes, ya que simplemente indican el valor obtenido para ese metabólito en la muestra biológica y que sí que elimine aquellas filas con un exceso de valores faltantes, siendo en este caso el límite un 20% de los datos. Dado que nuestros datos están agrupados, cada muestra biológica perteneciendo a un tipo de tratamiento, y disponemos de muchos metabolitos, podemos parametrizar que elimine la fila entera para todos los grupos. Finalmente, el método especificado para la imputación de valores será el algoritmo k-Nearest Neighbours, que estimará los valores faltantes en función de los valores vecinos más cercanos.
 
 ```{r se Imputacion NAs}
 # Curamos los datos de nuestro SE mediante la función PomaImpute
@@ -213,51 +226,72 @@ imp_se <- se %>%PomaImpute(zeros_as_na = FALSE, # Los 0 no son NA
                 group_by = TRUE, 
                 method = "knn") # Imputamos a los valores perdidos según                                   el algoritmo de knn
 ```
+Con la previa imputación hemos eliminado un total de 182 metabolitos, reduciendo las dimensiones de nuestra matriz de datos. 
 
-3 Normalizacion de los datos
-  3.1 pq
-  3.2 que tipo
+### 4.3.2 Normalización de los datos
+A continuación y siguiendo el workflow típico de un análisis utilizando las funciones del paquete `POMA`, normalizaremos los datos y observaremos como afecta esto a los mismos. Observamos que podemos conseguir una normalización de los datos con una transformación del logaritmo natural de Pareto. Finalmente, compararemos gráficamente con un diagrama de caja las distribuciones de los tres grupos antes y después de la normalización.
 
-```{r se Norm}
-# Normalización
+```{r se Norm, fig.width=8, fig.height=3,fig.align="center"}
+# Generamos la variable con los datos normalizados
 norm_se <- imp_se %>% PomaNorm(method = "log_pareto")
+
+# Y comparamos gráficamente como son los datos antes y después de la normalización
+p1<-PomaBoxplots(imp_se, x = "samples",theme_params = list(axistext = "y"))
+p2<-PomaBoxplots(norm_se, x = "samples",theme_params = list(legend_title = FALSE, axistext = "y", axistitle="X"))
+
+# Imprimimos ambos gráficos juntos usando el paquete patchwork
+p1+p2
+```
+De los gráficos anteriores observamos, antes de la normalización, que para la mayoría de metabolitos los niveles detectados son 0 o muy bajos, y sólo algunos metabolitos obtienen valores de área elevados como resultado del análisis. Estos metabolitos podrían estar relacionados con nuestro objeto de interés. Por otro lado, tras la normalización, observamos que aunque las distribuciones son relativamente similares y aproximadamente normales a simple vista, parece haber bastante varianza intragrupal.
+
+### 4.3.3 Detección de outliers
+
+La identificación y eliminación de outliers es un punto importante en el análisis estadístico ya que puede afectar a los resultados. No obstante, también pueden aportar información clave si estos provienen de información genuina y no de un error de medición o de procedimiento. Para la identificación y eliminación de outliers, encontramos la función `PomaOutliers` que nos permitirá escoger el tipo de método de medición de distancia del outlier y el tipo de medida central. También establecemos el valor de corte por defecto.
+
+```{r Outliers}
+outlier_results <- imp_se %>%
+   PomaOutliers(method = "euclidean",
+                type = "median",
+                coef = 2,
+                labels = FALSE)
+
+outlier_results$outliers
 ```
 
-4 Ranged???
+Observamos que, para los datos sin normalizar, la función detecta que la muestra a12 pertenciente al grupo del tratamiento tras la ingesta de zumo de manzana es un outlier. Podemos acceder al nuevo `SummarizedExperiment` con la matriz de datos sin esta muestra. Observaremos que tras la operación de imputación y la eliminación de outliers hemos reducido las dimensiones de nuestra matriz de datos, habiendo eliminado 182 metaboltos y 1 muestra.
 
-5 Plots
-
-```{r se Plots}
-
-# PomaBoxplots(imp_se, x = "samples")
-# PomaBoxplots(norm_se, x = "samples")
-# PomaDensity(imp_se, x = "samples")
-# PomaDensity(norm_se, x = "samples")
-# PomaOutliers(normalized)$polygon_plot
-
+```{r clean imp_se}
+clean_se<-outlier_results$data
+dim(clean_se)
 ```
 
-6 PCA
+### 4.3.4 Análisis sparse Partial Least Squares Discriminant Analysis
 
-Análisis PCA
-```{r PCA}
-# Análisis PCA
-poma_pca<-PomaPCA(
-imp_se,
-outcome = NULL,
-center = TRUE,
-scale = TRUE,
-ncomp = 20,
-labels = FALSE,
-ellipse = FALSE,
-load_length = 1
-)
+Como se ha comentado al comienzo del apartado 4.3, una manera de poder analizar datos con miles de variables, como es el caso de estos datos metabolómicos, es a través de la reducción de la dimensionalidad. A través de la técnica sparse PArtial Least Squares Discriminant Analysis (sPLS-DA) podemos ejecutar la elección de variables, con costes computacionales competitivos y resultados gráficos interpretables {@le_cao_boitard_besse_2011}.
 
-# Gráfico PCA
-poma_pca$factors_plot
+En el paquete `POMA` tenemos funciones que nos ayudan a realizar este análisis.
+
+```{r pls, fig.width=8, fig.height=3,fig.align="center"}
+poma_splsda<-clean_se %>%
+  PomaPLS(method = "splsda",
+  y = "Treatment",
+  ncomp = 5,
+  labels = FALSE,
+  ellipse = FALSE)
+
+# Función pull() para pasar a vector Fuente:
+# https://stackoverflow.com/questions/21618423/extract-a-dplyr-tbl-column-as-a-vector
+
+vec_features<-pull(poma_splsda$selected_features[,1])
+vec_info<-rowData(se)[vec_features,1]
+vec_info->poma_splsda$selected_features[,3]
+names(poma_splsda$selected_features)[3]<-"Metabolito"
+
+kable(poma_splsda$selected_features, caption="Features seleccionadas")
+
+poma_splsda$factors_plot
 ```
-
-7 Algo mas? Miramos lo que hizo el de POMA
+Del análisis anterior observamos cómo, tras la selección de variables, las muestras biológicas posteriores a la ingesta de zumo de manzana según el protocolo establecido, presenta unas puntuaciones diferenciadamente mayores que las obtenidas con zumo de arándano y las muestras basales. Observando los metabolitos seleccionados para el cálculo del componente 1, vemos que esta información se traduce principalmente, en menor presencia de ácido 12-hidroxidodecanoico y mayor presencia de (R)-Mevalonato.
 
 # Discusión
 
@@ -271,6 +305,8 @@ Es importante que reflexionéis sobre las limitaciones del estudio y
 sobre el trabajo que habéis realizado, en el contexto del problema
 biológico de interés que aborda la PEC. (1 página)
 
+rangedexperiments con importantes
+
 # Conclusiones
 
 De tener pistas que nos lleven a que estos alimentos absorben muchas procianidinas, igual es interesante aumentar n, concluir que realmente se absorbe en general e investigar que rutas metabolicas dan lugar a esto.
@@ -280,7 +316,7 @@ De tener pistas que nos lleven a que estos alimentos absorben muchas procianidin
 ## Información sobre la sesión de R
 
 ```{r SessionInfo}
-# Mostramos toda la información de la sesión
+# Mostramos la información de la sesión
 print(sessionInfo(),locale=FALSE)
 ```
 
