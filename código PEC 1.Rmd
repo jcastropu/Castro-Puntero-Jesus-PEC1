@@ -16,7 +16,6 @@ link-citations: true
 
 # Fuente formateo títulos, autor y date, para centrarlos en el documento: https://stackoverflow.com/questions/43404487/how-do-i-center-my-yaml-heading-in-an-r-markdown-html-document
 ---
-
 ```{=html}
 <style type="text/css">
 
