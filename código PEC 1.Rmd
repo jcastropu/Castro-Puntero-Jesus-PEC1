@@ -273,7 +273,7 @@ dim(clean_se)
 
 ### 4.3.4 Análisis sparse Partial Least Squares Discriminant Analysis
 
-Como se ha comentado al comienzo del apartado 4.3, una manera de poder analizar datos con miles de variables, como es el caso de estos datos metabolómicos, es a través de la reducción de la dimensionalidad. A través de la técnica *sparse Partial Least Squares Discriminant Analysis* (sPLS-DA) podemos ejecutar la elección de variables, con costes computacionales competitivos y resultados gráficos interpretables {@le_cao_boitard_besse_2011}.
+Como se ha comentado al comienzo del apartado 4.3, una manera de poder analizar datos con miles de variables, como es el caso de estos datos metabolómicos, es a través de la reducción de la dimensionalidad. A través de la técnica *sparse Partial Least Squares Discriminant Analysis* (sPLS-DA) podemos ejecutar la elección de variables, con costes computacionales competitivos y resultados gráficos interpretables [@le_cao_boitard_besse_2011].
 
 En el paquete `POMA` tenemos funciones que nos ayudan a realizar este análisis.
 
