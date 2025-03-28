@@ -1,14 +1,14 @@
 ---
-title: "Primera prueba de evaluación continua"
-subtitle: "Prueba de evaluación continua 1"
+title: "Análisis de datos ómicos (M0-157)"
+subtitle: "Primera prueba de evaluación continua"
 date: '`r format(Sys.Date(),"%e de %B, %Y")`'
 author: "Jesús Castro Puntero"
 output:
-  github_document:
-    toc: yes
-  # pdf_document:
-  #   keep_tex: yes
+  # github_document:
   #   toc: yes
+  pdf_document:
+    keep_tex: yes
+    toc: yes
 # params:
 bibliography: BibliographyAO_PEC1.bib
 csl: ieee.csl # Fuente: https://www.zotero.org/styles?q=ieee
@@ -16,7 +16,6 @@ link-citations: true
 
 # Fuente formateo títulos, autor y date, para centrarlos en el documento: https://stackoverflow.com/questions/43404487/how-do-i-center-my-yaml-heading-in-an-r-markdown-html-document
 ---
-
 
 ```{=html}
 <style type="text/css">
@@ -54,7 +53,7 @@ options(width = 60)  # Ajustamos el ancho de salida del código
 ```{r load_libraries, include=FALSE}
 library(metabolomicsWorkbenchR)
 library(ggplot2)
-library(patchwork)
+library(patchwork) # para p1+p2
 library(SummarizedExperiment)
 library(readxl)
 library(POMA)
@@ -62,33 +61,31 @@ library(dplyr) # para pull()
 library(knitr) # para kable()
 ```
 
+\newpage
+
 # 1. Abstract
 
-Breve resumen sobre el proceso y los principales resultados. (150
-palabras)
+En este trabajo se ha llevado a cabo un análisis de datos metabolómicos utilizando principalmente el paquete `POMA` [@a2025_poma], adoptando el workflow propio de éste, para la exploración y procesamiento de los datos. Se ha trabajado con el resultado de los análisis llevados a cabo en el estudio ST000291[@ST000291], los cuales han sido integrados y trabajados a través de un objeto `SummarizedExperiment`. Se ha estudiado el origen de estos datos y se han procesado a partir de los datos curados proporcionados, preparándolos para un análisis más profundo y aplicando sPSL-DA como técnica de reducción de la dimensionalidad de los datos.
 
+Se han identificado diferencias en el metabolismo tras la ingesta de distintos zumos, lo que podría afectar a la biosíntesis de procianidinas, compuestos con potenciales beneficios para la salud metabólica. Dado su posible papel en la sensibilidad a la insulina, sería necesario un estudio más profundo para evaluar su impacto.
 
 # 2. Objetivos
 
-En esta PEC ejecutaremos un análisis exploratorio de los datos del estudio LC-MS Based Approaches to Investigate Metabolomic Differences in the Urine of Young Women after Drinking Cranberry Juice or Apple Juice (ID del estudio: ST000291). Este estudio tiene como objetivo principal investigar los cambios metabólicos generales inducidos por la ingesta de concentrados de procianidinas provenientes de zumo de arándanos y zumo de manzana. Para ello, se utilizó un enfoque metabolómico basado en cromatografía líquida y espectrometría de masas (LC-MS), que permite una visión global de los metabolitos presentes en las muestras biológicas [@a2025_nci]. Este trabajo de la Universidad de Florida es un caso de estudio comparativo o de expresión diferencial ya que su objetivo es buscar las diferencias entre los perfiles metabólicos provenientes de los dos tipos de zumo.
+En esta PEC ejecutaremos un análisis exploratorio de los datos del estudio *LC-MS Based Approaches to Investigate Metabolomic Differences in the Urine of Young Women after Drinking Cranberry Juice or Apple Juice* (ID del estudio: ST000291). Este estudio tiene como objetivo principal investigar los cambios metabólicos generales inducidos por la ingesta de concentrados de procianidinas provenientes de zumo de arándanos y zumo de manzana. Para ello, se utilizó un enfoque metabolómico basado en cromatografía líquida y espectrometría de masas (LC-MS), que permite una visión global de los metabolitos presentes en las muestras biológicas [@a2025_nci]. Este trabajo de la Universidad de Florida es un caso de estudio comparativo o de expresión diferencial ya que su objetivo es buscar las diferencias entre los perfiles metabólicos provenientes de los dos tipos de zumo.
 
-Las procianidinas son un grupo importante de moléculas bioactivas conocidas por sus beneficios para la salud humana, mostrando un gran potencial en el tratamiento de enfermedades metabólicas crónicas como el cáncer, la diabetes y las enfermedades cardiovasculares, ya que previenen el daño celular relacionado con el estrés oxidativo [@valenciahernandez_2021_procyanidins].  Estudios como los de Y. Liu et al. @liu_2022_procyanidins y  N. Gonzalez-Abuin et al. @gonzalezabuin_2015_procyanidins apoyan esta idea, sugiriendo que las procianidinas tienen efectos beneficiosos en la mejora a la resistencia a la insulina y la regulación de la glucosa, en parte a través de la modulación de la microbiota intestinal y la inhibición de vías inflamatorias.
+Las procianidinas son un grupo importante de moléculas bioactivas conocidas por sus beneficios para la salud humana, mostrando un gran potencial en el tratamiento de enfermedades metabólicas crónicas como el cáncer, la diabetes y las enfermedades cardiovasculares, ya que previenen el daño celular relacionado con el estrés oxidativo [@valenciahernandez_2021_procyanidins]. Estudios como los de Y. Liu et al. @liu_2022_procyanidins y N. Gonzalez-Abuin et al. @gonzalezabuin_2015_procyanidins apoyan esta idea, sugiriendo que las procianidinas tienen efectos beneficiosos en la mejora a la resistencia a la insulina y la regulación de la glucosa, en parte a través de la modulación de la microbiota intestinal y la inhibición de vías inflamatorias.
 
-Conocer el comportamiento y la absorción de estas moléculas puede ser de gran importancia dado su efecto en la salud humana y su amplia disponibilidad como residuo de productos agro-industriales [@valenciahernandez_2021_procyanidins]. El objetivo de este documento será realizar una exploración inicial de los datos, enfocada dentro del proceso de análisis de datos ómicos, adecuando los datos a un objeto `SummarizedExperiment`, haciendo un pequeño hincapié en el preprocesamiento de los datos, así como una visualización general de los mismos. Este análisis exploratorio tiene como meta simular la preparación de los datos y la confirmación de la adecuación de los mismos para llevar a cabo análisis más profundos.
-
-Queda fuera del alcance de este documento la identificación de metabolitos relacionados con las rutas metabólicas derivadas de la ingesta de los zumos, así como análisis exploratorios más detallados o la corrección de los posibles errores en la obtención de los datos crudos.
-
+Conocer el comportamiento y la absorción de estas moléculas puede ser de gran importancia dado su efecto en la salud humana y su amplia disponibilidad como residuo de productos agro-industriales [@valenciahernandez_2021_procyanidins]. El objetivo de este documento será realizar una exploración inicial de los datos, enfocada dentro del proceso de análisis de datos ómicos, construyendo un objeto `SummarizedExperiment`, poner en práctica el workflow típico del paquete `POMA` que nos permita generar representaciones gráficas, procesar los datos y realizar un análisis superficial de lo obtenido con el fin de generar una primera hipótesis de trabajo.
 
 # 3. Métodos
 
-Para la obtención de las muestras biológicas se reclutaron 18 mujeres universitarias sanas (21-29 años, IMC 18.5-25) y se aplicó un protocolo para la obtención de las muestras biológicas. Durante los primeros seis días, las participantes evitaron alimentos ricos en procianidinas. El séptimo día, tras un ayuno nocturno, se recogieron muestras basales de orina.  Las participantes fueron asignadas aleatoriamente en dos grupos (n=9) para consumir zumo de arándano o de manzana durante tres días (días 7-9). El décimo día, tras un nuevo ayuno nocturno, se recogieron muestras de orina. Tras un período de lavado de dos semanas, las participantes cambiaron al otro tipo de zumo y repitieron el protocolo. Se excluyeron tres participantes del análisis: una por falta de asistencia y dos por no proporcionar muestras de orina. Cabe destacar que, aunque en el estudio se menciona la obtención de muestras biológicas de plasma incluidas dentro de el protocolo, no se publicaron los datos relativos al análisis de las mismas.
+Para la obtención de las muestras biológicas se reclutaron 18 mujeres universitarias sanas (21-29 años, IMC 18.5-25) y se aplicó un protocolo para la obtención de las muestras biológicas. Durante los primeros seis días, las participantes evitaron alimentos ricos en procianidinas. El séptimo día, tras un ayuno nocturno, se recogieron muestras basales de orina. Las participantes fueron asignadas aleatoriamente en dos grupos (n=9) para consumir zumo de arándano o de manzana durante tres días (días 7-9). El décimo día, tras un nuevo ayuno nocturno, se recogieron muestras de orina. Tras un período de lavado de dos semanas, las participantes cambiaron al otro tipo de zumo y repitieron el protocolo. Se excluyeron tres participantes del análisis: una por falta de asistencia y dos por no proporcionar muestras de orina. Cabe destacar que, aunque en el estudio se menciona la obtención de muestras biológicas de plasma incluidas dentro de el protocolo, no se publicaron los datos relativos al análisis de las mismas.
 
-Las muestras biológicas fueron analizadas mediante un enfoque metabolómico basado en cromatografía líquida acoplada a espectrometría de masas (LC-MS) para el análisis de los metabolitos. Para la cromatografía líquida se utilizó el sistema 	Thermo Scientific-Dionex Ultimate 3000 con una columna 	ACE Excel 2 C18-PFP (100 x 2.1mm, 2um).  Para la espectrometría de masas se utilizó el instrumento Thermo Q Exactive Orbitrap con los modos de ionización positivos y negativos. En el protocolo de preparación de muestras (Sampleprep ID: SP000319) se detalla que los datos crudos obtenidos del análisis se convierten a archivos .MZxml y procesados con MZmine y Metaboanalyst. De esta manera, el estudio proporciona dos análisis complementarios: el análisis AN000464 en modo positivo y el análisis AN000465 en modo negativo.
+Las muestras biológicas fueron analizadas mediante un enfoque metabolómico basado en cromatografía líquida acoplada a espectrometría de masas (LC-MS) para el análisis de los metabolitos. Para la cromatografía líquida se utilizó el sistema Thermo Scientific-Dionex Ultimate 3000 con una columna ACE Excel 2 C18-PFP (100 x 2.1mm, 2um). Para la espectrometría de masas se utilizó el instrumento Thermo Q Exactive Orbitrap con los modos de ionización positivos y negativos. En el protocolo de preparación de muestras (Sampleprep ID: SP000319) se detalla que los datos crudos obtenidos del análisis se convierten a archivos .MZxml y procesados con MZmine y Metaboanalyst. De esta manera, el estudio proporciona dos análisis complementarios: el análisis AN000464 en modo positivo y el análisis AN000465 en modo negativo.
 
 Previo al trabajo de este documento, los nombres de los metabolitos han sido identificados a través de la herramienta de web scrapping `rvest` para obtener los identificadores genéricos de PubChem, KEGG y sus nombres. Los datos, la información de los metabolitos y la información de las covariables se han almacenado en el archivo ST000291.xlsx. Para la realización de esta PEC, se usará el archivo ST000291_curated.xlsx que identifica los datos con el metabolito correspondiente.
 
 Para el posterior análisis, se usarán principalmente el paquete POMA [@a2025_poma] que nos permitirá construir objetos de `SummarizedExperiment` y aplicar métodos predefinidos para la elaboración de análisis y gráficos. También recalcamos la importancia del paquete metabolomicsWorkbenchR [@metabolomicsworkbenchr_2025] que nos permite recuperar, entre otros, la información de los metadatos del análisis original. Al final del documento se muestra en detalle el conjunto de paquetes usados para ejecución del código.
-
 
 # 4. Resultados
 
@@ -115,7 +112,7 @@ features<-features[,-1]
 
 Una vez cargados los datos y almacenados en las distintas variables, podemos utilizar la función de `PomaCreateObject()` para generar el objeto `SummarizedExperiment` que, al igual que los objetos `ExpressionSet`, son un tipo de estructura de datos utilizadas en R para almacenar y manipular datos ómicos y metadatos relacionados. Ambas pertenecen a diferentes paquetes de Bioconductor, pero mientras `ExpressionSet` solo permite una matriz de datos en cada objeto, `SummarizedExperiment` puede tener múltiples matrices, las cuales pueden ser accedidas a través de `assays()`. Además, el uso de las funciones y objetos relacionadas con el paquete `SummarizedExperiment`, permite el uso de muchos otros paquetes más modernos desarrollados con métodos enfocados con esta estructura de datos. Como veremos a continuación, los métodos relacionados con el acceso a la información mostrados en la Figura 1, difieren de los utilizados para los `ExpressionSet`.
 
-![Estructura de datos de un `SummarizedExperiment` Morgan M. 2023 https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html](figura_summarizedexperiment.jpg){width=300 height=300px}
+![Estructura de datos de un `SummarizedExperiment` Morgan M. 2023 <https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html>](figura_summarizedexperiment.jpg){width="300" height="300px"}
 
 ```{r Crear SummarizedExperiment}
 # Generamos el objeto SE utilizando la función incluida en la librería POMA
@@ -123,10 +120,12 @@ Una vez cargados los datos y almacenados en las distintas variables, podemos uti
 # Nótese que tenemos que transponer features para encajar con el formato esperado de la función
 se <- PomaCreateObject(metadata = target, features = t(features), group)
 ```
+
 ```{r metabolites, echo=FALSE}
 # Añadimos la información de los metabolitos en rowData, previamente ordanadas
 rowData(se)<-as.data.frame(metabolite_names)
 ```
+
 ```{r rm, echo=FALSE}
 # Eliminamos las importaciones para liberar memoria
 rm(features)
@@ -158,10 +157,14 @@ metadata(se)$units<-metadata(og_se1)$units
 metadata(se)$description<-metadata(og_se1)$description
 
 ```
-```{r rm2, echo=FALSE}
+
+```{r rm2 and save, echo=FALSE}
 # Finalmente, podemos eliminar los datos originales de metabolomicsWorkbenchR
 rm(og_se1)
 rm(og_se)
+
+# Y guardamos nuestro SummarizedExperiment creado con los metadatos en formato binario .Rda
+save(se,file="SummarizedExperiment.Rda")
 ```
 
 ## 4.2 Análisis de la estructura de datos
@@ -216,7 +219,7 @@ El análisis de estudios ómicos suele estar caracterizado por una alta dimensio
 
 ### 4.3.1 Imputación de valores faltantes
 
-Para llevar a cabo la imputación de valores en lugares de la matriz de datos con valores faltantes, usaremos a cabo la función `PomaImute` de la librería `POMA`. A través de los parámetros de opciones del método, podemos elegir que no trate a los 0 como valores faltantes, ya que simplemente indican el valor obtenido para ese metabólito en la muestra biológica y que sí que elimine aquellas filas con un exceso de valores faltantes, siendo en este caso el límite un 20% de los datos. Dado que nuestros datos están agrupados, cada muestra biológica perteneciendo a un tipo de tratamiento, y disponemos de muchos metabolitos, podemos parametrizar que elimine la fila entera para todos los grupos. Finalmente, el método especificado para la imputación de valores será el algoritmo k-Nearest Neighbours, que estimará los valores faltantes en función de los valores vecinos más cercanos.
+Para llevar a cabo la imputación de valores en lugares de la matriz de datos con valores faltantes, usaremos a cabo la función `PomaImpute` de la librería `POMA`. A través de los parámetros de opciones del método, podemos elegir que no trate a los 0 como valores faltantes, ya que simplemente indican el valor obtenido para ese metabólito en la muestra biológica y que sí que elimine aquellas filas con un exceso de valores faltantes, siendo en este caso el límite un 20% de los datos. Dado que nuestros datos están agrupados, cada muestra biológica perteneciendo a un tipo de tratamiento, y disponemos de muchos metabolitos, podemos parametrizar que elimine la fila entera para todos los grupos. Finalmente, el método especificado para la imputación de valores será el algoritmo k-Nearest Neighbours, que estimará los valores faltantes en función de los valores vecinos más cercanos.
 
 ```{r se Imputacion NAs}
 # Curamos los datos de nuestro SE mediante la función PomaImpute
@@ -226,9 +229,11 @@ imp_se <- se %>%PomaImpute(zeros_as_na = FALSE, # Los 0 no son NA
                 group_by = TRUE, 
                 method = "knn") # Imputamos a los valores perdidos según                                   el algoritmo de knn
 ```
-Con la previa imputación hemos eliminado un total de 182 metabolitos, reduciendo las dimensiones de nuestra matriz de datos. 
+
+Con la previa imputación hemos eliminado un total de 182 metabolitos, reduciendo las dimensiones de nuestra matriz de datos.
 
 ### 4.3.2 Normalización de los datos
+
 A continuación y siguiendo el workflow típico de un análisis utilizando las funciones del paquete `POMA`, normalizaremos los datos y observaremos como afecta esto a los mismos. Observamos que podemos conseguir una normalización de los datos con una transformación del logaritmo natural de Pareto. Finalmente, compararemos gráficamente con un diagrama de caja las distribuciones de los tres grupos antes y después de la normalización.
 
 ```{r se Norm, fig.width=8, fig.height=3,fig.align="center"}
@@ -242,6 +247,7 @@ p2<-PomaBoxplots(norm_se, x = "samples",theme_params = list(legend_title = FALSE
 # Imprimimos ambos gráficos juntos usando el paquete patchwork
 p1+p2
 ```
+
 De los gráficos anteriores observamos, antes de la normalización, que para la mayoría de metabolitos los niveles detectados son 0 o muy bajos, y sólo algunos metabolitos obtienen valores de área elevados como resultado del análisis. Estos metabolitos podrían estar relacionados con nuestro objeto de interés. Por otro lado, tras la normalización, observamos que aunque las distribuciones son relativamente similares y aproximadamente normales a simple vista, parece haber bastante varianza intragrupal.
 
 ### 4.3.3 Detección de outliers
@@ -267,11 +273,11 @@ dim(clean_se)
 
 ### 4.3.4 Análisis sparse Partial Least Squares Discriminant Analysis
 
-Como se ha comentado al comienzo del apartado 4.3, una manera de poder analizar datos con miles de variables, como es el caso de estos datos metabolómicos, es a través de la reducción de la dimensionalidad. A través de la técnica sparse PArtial Least Squares Discriminant Analysis (sPLS-DA) podemos ejecutar la elección de variables, con costes computacionales competitivos y resultados gráficos interpretables {@le_cao_boitard_besse_2011}.
+Como se ha comentado al comienzo del apartado 4.3, una manera de poder analizar datos con miles de variables, como es el caso de estos datos metabolómicos, es a través de la reducción de la dimensionalidad. A través de la técnica *sparse Partial Least Squares Discriminant Analysis* (sPLS-DA) podemos ejecutar la elección de variables, con costes computacionales competitivos y resultados gráficos interpretables {@le_cao_boitard_besse_2011}.
 
 En el paquete `POMA` tenemos funciones que nos ayudan a realizar este análisis.
 
-```{r pls, fig.width=8, fig.height=3,fig.align="center"}
+```{r pls, fig.width=8, fig.height=4,fig.align="center"}
 poma_splsda<-clean_se %>%
   PomaPLS(method = "splsda",
   y = "Treatment",
@@ -291,39 +297,27 @@ kable(poma_splsda$selected_features, caption="Features seleccionadas")
 
 poma_splsda$factors_plot
 ```
-Del análisis anterior observamos cómo, tras la selección de variables, las muestras biológicas posteriores a la ingesta de zumo de manzana según el protocolo establecido, presenta unas puntuaciones diferenciadamente mayores que las obtenidas con zumo de arándano y las muestras basales. Observando los metabolitos seleccionados para el cálculo del componente 1, vemos que esta información se traduce principalmente, en menor presencia de ácido 12-hidroxidodecanoico y mayor presencia de (R)-Mevalonato.
 
-# Discusión
+Del análisis anterior observamos cómo, tras la selección de variables, las muestras biológicas posteriores a la ingesta de zumo de manzana según el protocolo establecido, presenta unas puntuaciones diferenciadamente mayores que las obtenidas con zumo de arándano y las muestras basales. Observando los metabolitos seleccionados para el cálculo del componente 1, vemos que esta información se traduce principalmente, en menor presencia de ácido 12-hidroxidodecanoico y mayor presencia de (R)-Mevalonato. El resto de metabolitos y su contribución en el componente 1 puede ser observado en la tabla 1.
 
--> Falta muestras de sangre
--> n demsaiado pequeña
--> Está bien que sea un experimento cruzado
+# 5. Discusión
 
-Es posible viendo los resultados que no haya diferencias significativas y haya que hacer análisis más profundos.
+Los resultados anteriores sugieren un metabolismo diferenciado entre la ingesta de zumo de manzana respecto a las muestras con niveles basales o provenientes del tratamiento con zumo de arándanos. Debería realizarse un estudio de los metabolitos mostrados en la tabla 1 para analizar su relación con la biosíntesis de procianidinas en rutas metabólicas del organismo así como de su relación con la diabetes y la resistencia o sensibilidad a la insulina. Una mayor presencia de aquellos metabolitos beneficiosos por participar en rutas de biosíntesis de procianidina o de mejora de la sensibilidad a la insulina y una menor presencia de aquellos metabolitos que generen resistencia a la insulina podría sugerir un impacto positivo del consumo de zumo de manzana en el contexto de la prevención y manejo de la diabetes.
 
-Es importante que reflexionéis sobre las limitaciones del estudio y
-sobre el trabajo que habéis realizado, en el contexto del problema
-biológico de interés que aborda la PEC. (1 página)
+También hemos podido observar en los resultados que mientras que los resultados en el análisis por sPLS-DA de la ingesta de zumo de arándano tienen un componente 1 parecido a los de las muestras basales, presentan un componente 2 mucho más elevado. También parece haber menor variabilidad en los resultados. Aunque el estudio del componente 2 y los metabolitos relacionados quedan fuera del alcance de este estudio, sería necesaria la comprobación de los mismos y su influencia en la síntesis de procianidinas y su relación con la sensibilidad o resistencia a la insulina para sacar ideas más concluyentes.
 
-rangedexperiments con importantes
+Hay que tener presente que, en este estudio, se han contemplado un total de 15 individuos y la generación de 45 muestras biológicas, realizando un estudio cruzado, lo cual permite una comparación más precisa entre los individuos, reduciendo variabilidad. No obstante, el tamaño muestral puede no ser lo suficientemente grande para sacar conclusiones reproducibles. Tampoco se ha especificado la fuente de los zumos y su contenido, lo cuál puede afectar profundamente los resultados. Tampoco se han incluido los análisis de plasma mencionados en el resumen del estudio[@ST000291].
 
-# Conclusiones
+# 6. Conclusiones
 
-De tener pistas que nos lleven a que estos alimentos absorben muchas procianidinas, igual es interesante aumentar n, concluir que realmente se absorbe en general e investigar que rutas metabolicas dan lugar a esto.
+Los resultados obtenidos en este análisis resaltan la utilidad de herramientas como `Bioconductor` y, en particular, la clase `SummarizedExperiment`, que facilita el almacenamiento y la gestión de datos metabolómicos. Asimismo, el uso de `metabolomicsWorkbenchR` para la adquisición de datos y del paquete `POMA` para su procesamiento y exploración mejoran y facilitan la implementación del flujo de trabajo. Estas herramientas proporcionan un entorno eficiente para la manipulación y análisis de datos ómicos, permitiendo la aplicación de técnicas como imputación y eliminación de valores faltantes, normalización y herramientas enfocadas en la reducción de la dimensión de los datos.
 
+Sin embargo, los análisis realizados en este estudio no pueden considerarse concluyentes. Para obtener una comprensión más profunda y veraz, sería necesario complementar estos resultados con otras técnicas de reducción de dimensión y profundizar en la interpretación biológica de los metabolitos identificados. Además, el impacto de estos compuestos en la salud, particularmente en relación con la diabetes y el metabolismo de las procianidinas, debe ser explorado en estudios adicionales. La validación de los efectos en la salud de estos alimentos podría derivar en desarrollos biomédicos o de fitomejoras más enfocados en la optimización de la absorción o producción de ciertos metabolitos.
 
-# Anexos
-## Información sobre la sesión de R
+# 7. Anexos
 
-```{r SessionInfo}
-# Mostramos la información de la sesión
-print(sessionInfo(),locale=FALSE)
-```
+## 7.1 Repositorio GitHub
 
-## Referencias
+El informe, el código comentado y utilizado en este documento, el objeto `SummarizedExperiment` en formato binario y algunos archivos y explicaciones adicionales se pueden encontrar en el repositorio: <https://github.com/jcastropu/Castro-Puntero-Jesus-PEC1>
 
-Aquí debéis incluir un enlace al repositorio de GitHub que contiene el
-código que habéis utilizado para abordar el análisis (debidamente
-comentado).
-
-<https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Study&StudyID=ST000291>
+## 7.2 Referencias
