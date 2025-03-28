@@ -1,7 +1,7 @@
-Primera prueba de evaluación continua
+Análisis de datos ómicos (M0-157)
 ================
 Jesús Castro Puntero
-27 de marzo, 2025
+28 de marzo, 2025
 
 - [1. Abstract](#1-abstract)
 - [2. Objetivos](#2-objetivos)
@@ -20,61 +20,55 @@ Jesús Castro Puntero
     - [4.3.3 Detección de outliers](#433-detección-de-outliers)
     - [4.3.4 Análisis sparse Partial Least Squares Discriminant
       Analysis](#434-análisis-sparse-partial-least-squares-discriminant-analysis)
-- [Discusión](#discusión)
-- [Conclusiones](#conclusiones)
-- [Anexos](#anexos)
-  - [Información sobre la sesión de
-    R](#información-sobre-la-sesión-de-r)
-  - [Referencias](#referencias)
-
-<style type="text/css">
-&#10;h1.title {
-  font-size: 24px;
-  text-align: center;
-}
-&#10;h3.subtitle {
-  font-size: 24px;
-  text-align: center;
-}
-&#10;h4.date { /* Header 4 - and the author and data headers use this too  */
-  font-size: 18px;
-  text-align: center;
-}
-&#10;h4.author { /* Header 4 - and the author and data headers use this too  */
-    font-size: 18px;
-  text-align: center;
-}
-&#10;</style>
+- [5. Discusión](#5-discusión)
+- [6. Conclusiones](#6-conclusiones)
+- [7. Anexos](#7-anexos)
+  - [7.1 Repositorio GitHub](#71-repositorio-github)
+  - [7.2 Referencias](#72-referencias)
 
 # 1. Abstract
 
-Breve resumen sobre el proceso y los principales resultados. (150
-palabras)
+En este trabajo se ha llevado a cabo un análisis de datos metabolómicos
+utilizando principalmente el paquete `POMA` [\[1\]](#ref-a2025_poma),
+adoptando el workflow propio de éste, para la exploración y
+procesamiento de los datos. Se ha trabajado con el resultado de los
+análisis llevados a cabo en el estudio ST000291[\[2\]](#ref-ST000291),
+los cuales han sido integrados y trabajados a través de un objeto
+`SummarizedExperiment`. Se ha estudiado el origen de estos datos y se
+han procesado a partir de los datos curados proporcionados,
+preparándolos para un análisis más profundo y aplicando sPSL-DA como
+técnica de reducción de la dimensionalidad de los datos.
+
+Se han identificado diferencias en el metabolismo tras la ingesta de
+distintos zumos, lo que podría afectar a la biosíntesis de
+procianidinas, compuestos con potenciales beneficios para la salud
+metabólica. Dado su posible papel en la sensibilidad a la insulina,
+sería necesario un estudio más profundo para evaluar su impacto.
 
 # 2. Objetivos
 
 En esta PEC ejecutaremos un análisis exploratorio de los datos del
-estudio LC-MS Based Approaches to Investigate Metabolomic Differences in
-the Urine of Young Women after Drinking Cranberry Juice or Apple Juice
-(ID del estudio: ST000291). Este estudio tiene como objetivo principal
-investigar los cambios metabólicos generales inducidos por la ingesta de
-concentrados de procianidinas provenientes de zumo de arándanos y zumo
-de manzana. Para ello, se utilizó un enfoque metabolómico basado en
-cromatografía líquida y espectrometría de masas (LC-MS), que permite una
-visión global de los metabolitos presentes en las muestras biológicas
-[\[1\]](#ref-a2025_nci). Este trabajo de la Universidad de Florida es un
-caso de estudio comparativo o de expresión diferencial ya que su
-objetivo es buscar las diferencias entre los perfiles metabólicos
-provenientes de los dos tipos de zumo.
+estudio *LC-MS Based Approaches to Investigate Metabolomic Differences
+in the Urine of Young Women after Drinking Cranberry Juice or Apple
+Juice* (ID del estudio: ST000291). Este estudio tiene como objetivo
+principal investigar los cambios metabólicos generales inducidos por la
+ingesta de concentrados de procianidinas provenientes de zumo de
+arándanos y zumo de manzana. Para ello, se utilizó un enfoque
+metabolómico basado en cromatografía líquida y espectrometría de masas
+(LC-MS), que permite una visión global de los metabolitos presentes en
+las muestras biológicas [\[3\]](#ref-a2025_nci). Este trabajo de la
+Universidad de Florida es un caso de estudio comparativo o de expresión
+diferencial ya que su objetivo es buscar las diferencias entre los
+perfiles metabólicos provenientes de los dos tipos de zumo.
 
 Las procianidinas son un grupo importante de moléculas bioactivas
 conocidas por sus beneficios para la salud humana, mostrando un gran
 potencial en el tratamiento de enfermedades metabólicas crónicas como el
 cáncer, la diabetes y las enfermedades cardiovasculares, ya que
 previenen el daño celular relacionado con el estrés oxidativo
-[\[2\]](#ref-valenciahernandez_2021_procyanidins). Estudios como los de
-Y. Liu et al. [\[3\]](#ref-liu_2022_procyanidins) y N. Gonzalez-Abuin et
-al. [\[4\]](#ref-gonzalezabuin_2015_procyanidins) apoyan esta idea,
+[\[4\]](#ref-valenciahernandez_2021_procyanidins). Estudios como los de
+Y. Liu et al. [\[5\]](#ref-liu_2022_procyanidins) y N. Gonzalez-Abuin et
+al. [\[6\]](#ref-gonzalezabuin_2015_procyanidins) apoyan esta idea,
 sugiriendo que las procianidinas tienen efectos beneficiosos en la
 mejora a la resistencia a la insulina y la regulación de la glucosa, en
 parte a través de la modulación de la microbiota intestinal y la
@@ -83,20 +77,13 @@ inhibición de vías inflamatorias.
 Conocer el comportamiento y la absorción de estas moléculas puede ser de
 gran importancia dado su efecto en la salud humana y su amplia
 disponibilidad como residuo de productos agro-industriales
-[\[2\]](#ref-valenciahernandez_2021_procyanidins). El objetivo de este
+[\[4\]](#ref-valenciahernandez_2021_procyanidins). El objetivo de este
 documento será realizar una exploración inicial de los datos, enfocada
-dentro del proceso de análisis de datos ómicos, adecuando los datos a un
-objeto `SummarizedExperiment`, haciendo un pequeño hincapié en el
-preprocesamiento de los datos, así como una visualización general de los
-mismos. Este análisis exploratorio tiene como meta simular la
-preparación de los datos y la confirmación de la adecuación de los
-mismos para llevar a cabo análisis más profundos.
-
-Queda fuera del alcance de este documento la identificación de
-metabolitos relacionados con las rutas metabólicas derivadas de la
-ingesta de los zumos, así como análisis exploratorios más detallados o
-la corrección de los posibles errores en la obtención de los datos
-crudos.
+dentro del proceso de análisis de datos ómicos, construyendo un objeto
+`SummarizedExperiment`, poner en práctica el workflow típico del paquete
+`POMA` que nos permita generar representaciones gráficas, procesar los
+datos y realizar un análisis superficial de lo obtenido con el fin de
+generar una primera hipótesis de trabajo.
 
 # 3. Métodos
 
@@ -138,11 +125,11 @@ la realización de esta PEC, se usará el archivo ST000291_curated.xlsx
 que identifica los datos con el metabolito correspondiente.
 
 Para el posterior análisis, se usarán principalmente el paquete POMA
-[\[5\]](#ref-a2025_poma) que nos permitirá construir objetos de
+[\[1\]](#ref-a2025_poma) que nos permitirá construir objetos de
 `SummarizedExperiment` y aplicar métodos predefinidos para la
 elaboración de análisis y gráficos. También recalcamos la importancia
 del paquete metabolomicsWorkbenchR
-[\[6\]](#ref-metabolomicsworkbenchr_2025) que nos permite recuperar,
+[\[7\]](#ref-metabolomicsworkbenchr_2025) que nos permite recuperar,
 entre otros, la información de los metadatos del análisis original. Al
 final del documento se muestra en detalle el conjunto de paquetes usados
 para ejecución del código.
@@ -324,7 +311,7 @@ métricas estadísticas o inutilizar el uso de muchas funciones.
 ### 4.3.1 Imputación de valores faltantes
 
 Para llevar a cabo la imputación de valores en lugares de la matriz de
-datos con valores faltantes, usaremos a cabo la función `PomaImute` de
+datos con valores faltantes, usaremos a cabo la función `PomaImpute` de
 la librería `POMA`. A través de los parámetros de opciones del método,
 podemos elegir que no trate a los 0 como valores faltantes, ya que
 simplemente indican el valor obtenido para ese metabólito en la muestra
@@ -378,6 +365,7 @@ p1 + p2
 ```
 
 <img src="código-PEC-1_files/figure-gfm/se Norm-1.png" style="display: block; margin: auto;" />
+
 De los gráficos anteriores observamos, antes de la normalización, que
 para la mayoría de metabolitos los niveles detectados son 0 o muy bajos,
 y sólo algunos metabolitos obtienen valores de área elevados como
@@ -431,10 +419,10 @@ dim(clean_se)
 Como se ha comentado al comienzo del apartado 4.3, una manera de poder
 analizar datos con miles de variables, como es el caso de estos datos
 metabolómicos, es a través de la reducción de la dimensionalidad. A
-través de la técnica sparse PArtial Least Squares Discriminant Analysis
-(sPLS-DA) podemos ejecutar la elección de variables, con costes
-computacionales competitivos y resultados gráficos interpretables
-{[\[7\]](#ref-le_cao_boitard_besse_2011)}.
+través de la técnica *sparse Partial Least Squares Discriminant
+Analysis* (sPLS-DA) podemos ejecutar la elección de variables, con
+costes computacionales competitivos y resultados gráficos interpretables
+[\[8\]](#ref-le_cao_boitard_besse_2011).
 
 En el paquete `POMA` tenemos funciones que nos ayudan a realizar este
 análisis.
@@ -475,6 +463,7 @@ poma_splsda$factors_plot
 ```
 
 <img src="código-PEC-1_files/figure-gfm/pls-1.png" style="display: block; margin: auto;" />
+
 Del análisis anterior observamos cómo, tras la selección de variables,
 las muestras biológicas posteriores a la ingesta de zumo de manzana
 según el protocolo establecido, presenta unas puntuaciones
@@ -482,123 +471,109 @@ diferenciadamente mayores que las obtenidas con zumo de arándano y las
 muestras basales. Observando los metabolitos seleccionados para el
 cálculo del componente 1, vemos que esta información se traduce
 principalmente, en menor presencia de ácido 12-hidroxidodecanoico y
-mayor presencia de (R)-Mevalonato.
+mayor presencia de (R)-Mevalonato. El resto de metabolitos y su
+contribución en el componente 1 puede ser observado en la tabla 1.
 
-# Discusión
+# 5. Discusión
 
--\> Falta muestras de sangre -\> n demsaiado pequeña -\> Está bien que
-sea un experimento cruzado
+Los resultados anteriores sugieren un metabolismo diferenciado entre la
+ingesta de zumo de manzana respecto a las muestras con niveles basales o
+provenientes del tratamiento con zumo de arándanos. Debería realizarse
+un estudio de los metabolitos mostrados en la tabla 1 para analizar su
+relación con la biosíntesis de procianidinas en rutas metabólicas del
+organismo así como de su relación con la diabetes y la resistencia o
+sensibilidad a la insulina. Una mayor presencia de aquellos metabolitos
+beneficiosos por participar en rutas de biosíntesis de procianidina o de
+mejora de la sensibilidad a la insulina y una menor presencia de
+aquellos metabolitos que generen resistencia a la insulina podría
+sugerir un impacto positivo del consumo de zumo de manzana en el
+contexto de la prevención y manejo de la diabetes.
 
-Es posible viendo los resultados que no haya diferencias significativas
-y haya que hacer análisis más profundos.
+También hemos podido observar en los resultados que mientras que los
+resultados en el análisis por sPLS-DA de la ingesta de zumo de arándano
+tienen un componente 1 parecido a los de las muestras basales, presentan
+un componente 2 mucho más elevado. También parece haber menor
+variabilidad en los resultados. Aunque el estudio del componente 2 y los
+metabolitos relacionados quedan fuera del alcance de este estudio, sería
+necesaria la comprobación de los mismos y su influencia en la síntesis
+de procianidinas y su relación con la sensibilidad o resistencia a la
+insulina para sacar ideas más concluyentes.
 
-Es importante que reflexionéis sobre las limitaciones del estudio y
-sobre el trabajo que habéis realizado, en el contexto del problema
-biológico de interés que aborda la PEC. (1 página)
+Hay que tener presente que, en este estudio, se han contemplado un total
+de 15 individuos y la generación de 45 muestras biológicas, realizando
+un estudio cruzado, lo cual permite una comparación más precisa entre
+los individuos, reduciendo variabilidad. No obstante, el tamaño muestral
+puede no ser lo suficientemente grande para sacar conclusiones
+reproducibles. Tampoco se ha especificado la fuente de los zumos y su
+contenido, lo cuál puede afectar profundamente los resultados. Tampoco
+se han incluido los análisis de plasma mencionados en el resumen del
+estudio[\[2\]](#ref-ST000291).
 
-rangedexperiments con importantes
+# 6. Conclusiones
 
-# Conclusiones
+Los resultados obtenidos en este análisis resaltan la utilidad de
+herramientas como `Bioconductor` y, en particular, la clase
+`SummarizedExperiment`, que facilita el almacenamiento y la gestión de
+datos metabolómicos. Asimismo, el uso de `metabolomicsWorkbenchR` para
+la adquisición de datos y del paquete `POMA` para su procesamiento y
+exploración mejoran y facilitan la implementación del flujo de trabajo.
+Estas herramientas proporcionan un entorno eficiente para la
+manipulación y análisis de datos ómicos, permitiendo la aplicación de
+técnicas como imputación y eliminación de valores faltantes,
+normalización y herramientas enfocadas en la reducción de la dimensión
+de los datos.
 
-De tener pistas que nos lleven a que estos alimentos absorben muchas
-procianidinas, igual es interesante aumentar n, concluir que realmente
-se absorbe en general e investigar que rutas metabolicas dan lugar a
-esto.
+Sin embargo, los análisis realizados en este estudio no pueden
+considerarse concluyentes. Para obtener una comprensión más profunda y
+veraz, sería necesario complementar estos resultados con otras técnicas
+de reducción de dimensión y profundizar en la interpretación biológica
+de los metabolitos identificados. Además, el impacto de estos compuestos
+en la salud, particularmente en relación con la diabetes y el
+metabolismo de las procianidinas, debe ser explorado en estudios
+adicionales. La validación de los efectos en la salud de estos alimentos
+podría derivar en desarrollos biomédicos o de fitomejoras más enfocados
+en la optimización de la absorción o producción de ciertos metabolitos.
 
-# Anexos
+# 7. Anexos
 
-## Información sobre la sesión de R
+## 7.1 Repositorio GitHub
 
-``` r
-# Mostramos la información de la sesión
-print(sessionInfo(), locale = FALSE)
-```
+El informe, el código comentado y utilizado en este documento, el objeto
+`SummarizedExperiment` en formato binario y algunos archivos y
+explicaciones adicionales se pueden encontrar en el repositorio:
+<https://github.com/jcastropu/Castro-Puntero-Jesus-PEC1>
 
-    ## R version 4.4.3 (2025-02-28 ucrt)
-    ## Platform: x86_64-w64-mingw32/x64
-    ## Running under: Windows 10 x64 (build 19045)
-    ## 
-    ## Matrix products: default
-    ## 
-    ## 
-    ## attached base packages:
-    ## [1] stats4    stats     graphics  grDevices utils    
-    ## [6] datasets  methods   base     
-    ## 
-    ## other attached packages:
-    ##  [1] knitr_1.50                   
-    ##  [2] dplyr_1.1.4                  
-    ##  [3] POMA_1.16.0                  
-    ##  [4] readxl_1.4.5                 
-    ##  [5] SummarizedExperiment_1.36.0  
-    ##  [6] Biobase_2.66.0               
-    ##  [7] GenomicRanges_1.58.0         
-    ##  [8] GenomeInfoDb_1.42.3          
-    ##  [9] IRanges_2.40.1               
-    ## [10] S4Vectors_0.44.0             
-    ## [11] BiocGenerics_0.52.0          
-    ## [12] MatrixGenerics_1.18.1        
-    ## [13] matrixStats_1.5.0            
-    ## [14] patchwork_1.3.0              
-    ## [15] ggplot2_3.5.1                
-    ## [16] metabolomicsWorkbenchR_1.16.0
-    ## 
-    ## loaded via a namespace (and not attached):
-    ##  [1] tidyselect_1.2.1            viridisLite_0.4.2          
-    ##  [3] farver_2.1.2                fastmap_1.2.0              
-    ##  [5] digest_0.6.37               lifecycle_1.0.4            
-    ##  [7] cluster_2.1.8.1             magrittr_2.0.3             
-    ##  [9] compiler_4.4.3              rlang_1.1.5                
-    ## [11] tools_4.4.3                 igraph_2.1.4               
-    ## [13] utf8_1.2.4                  yaml_2.3.10                
-    ## [15] data.table_1.17.0           rARPACK_0.11-0             
-    ## [17] S4Arrays_1.6.0              labeling_0.4.3             
-    ## [19] ontologyIndex_2.12          curl_6.2.1                 
-    ## [21] DelayedArray_0.32.0         plyr_1.8.9                 
-    ## [23] RColorBrewer_1.1-3          xml2_1.3.8                 
-    ## [25] BiocParallel_1.40.0         abind_1.4-8                
-    ## [27] withr_3.0.2                 purrr_1.0.4                
-    ## [29] grid_4.4.3                  colorspace_2.1-1           
-    ## [31] scales_1.3.0                MASS_7.3-65                
-    ## [33] MultiAssayExperiment_1.32.0 ellipse_0.5.0              
-    ## [35] cli_3.6.4                   rmarkdown_2.29             
-    ## [37] vegan_2.6-10                crayon_1.5.3               
-    ## [39] generics_0.1.3              RSpectra_0.16-2            
-    ## [41] rstudioapi_0.17.1           reshape2_1.4.4             
-    ## [43] httr_1.4.7                  stringr_1.5.1              
-    ## [45] zlibbioc_1.52.0             splines_4.4.3              
-    ## [47] parallel_4.4.3              impute_1.80.0              
-    ## [49] formatR_1.14                cellranger_1.1.0           
-    ## [51] XVector_0.46.0              vctrs_0.6.5                
-    ## [53] Matrix_1.7-3                jsonlite_1.9.1             
-    ## [55] ggrepel_0.9.6               tidyr_1.3.1                
-    ## [57] glue_1.8.0                  codetools_0.2-20           
-    ## [59] mixOmics_6.30.0             ggtext_0.1.2               
-    ## [61] stringi_1.8.4               gtable_0.3.6               
-    ## [63] UCSC.utils_1.2.0            munsell_0.5.1              
-    ## [65] tibble_3.2.1                pillar_1.10.1              
-    ## [67] htmltools_0.5.8.1           GenomeInfoDbData_1.2.13    
-    ## [69] R6_2.6.1                    struct_1.18.0              
-    ## [71] evaluate_1.0.3              lattice_0.22-6             
-    ## [73] gridtext_0.1.5              corpcor_1.6.10             
-    ## [75] Rcpp_1.0.14                 gridExtra_2.3              
-    ## [77] SparseArray_1.6.2           nlme_3.1-167               
-    ## [79] permute_0.9-7               mgcv_1.9-1                 
-    ## [81] xfun_0.51                   pkgconfig_2.0.3
-
-## Referencias
-
-Aquí debéis incluir un enlace al repositorio de GitHub que contiene el
-código que habéis utilizado para abordar el análisis (debidamente
-comentado).
-
-<https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Study&StudyID=ST000291>
+## 7.2 Referencias
 
 <div id="refs" class="references csl-bib-body" entry-spacing="0">
 
-<div id="ref-a2025_nci" class="csl-entry">
+<div id="ref-a2025_poma" class="csl-entry">
 
 <span class="csl-left-margin">\[1\]
+</span><span class="csl-right-inline">“Castellano-escuder p,
+gonzález-domínguez r, carmona-pontaque f, andrés-lacueva c, sánchez-pla
+a (2021). ‘POMAShiny: A user-friendly web-based workflow for
+metabolomics and proteomics data analysis.’ PLOS computational biology,
+17(7), 1-15.” doi:
+<https://doi.org/10.1371/journal.pcbi.1009148>.</span>
+
+</div>
+
+<div id="ref-ST000291" class="csl-entry">
+
+<span class="csl-left-margin">\[2\]
+</span><span class="csl-right-inline">“This data is available at the NIH
+common fund’s national metabolomics data repository (NMDR) website, the
+metabolomics workbench, https://www.metabolomicsworkbench.org, where it
+has been assigned project ID PR000233. The data can be accessed directly
+via it’s project DOI: 10.21228/M8J590 this work is supported by NIH
+grant, U2C- DK119886.” </span>
+
+</div>
+
+<div id="ref-a2025_nci" class="csl-entry">
+
+<span class="csl-left-margin">\[3\]
 </span><span class="csl-right-inline">“NCI dictionary of cancer terms.”
 Cancer.gov, 2025. Accessed: Mar. 24, 2025. \[Online\]. Available:
 <https://www.cancer.gov/publications/dictionaries/cancer-terms/def/lc-ms></span>
@@ -607,7 +582,7 @@ Cancer.gov, 2025. Accessed: Mar. 24, 2025. \[Online\]. Available:
 
 <div id="ref-valenciahernandez_2021_procyanidins" class="csl-entry">
 
-<span class="csl-left-margin">\[2\]
+<span class="csl-left-margin">\[4\]
 </span><span class="csl-right-inline">L. J. Valencia-Hernandez, J. E.
 Wong-Paz, J. A. Ascacio-Valdés, M. L. Chávez-González, J. C.
 Contreras-Esquivel, and C. N. Aguilar, “Procyanidins: From
@@ -619,7 +594,7 @@ p. 3152, Dec. 2021, doi:
 
 <div id="ref-liu_2022_procyanidins" class="csl-entry">
 
-<span class="csl-left-margin">\[3\]
+<span class="csl-left-margin">\[5\]
 </span><span class="csl-right-inline">Y. Liu *et al.*, “Procyanidins and
 its metabolites by gut microbiome improves insulin resistance in
 gestational diabetes mellitus mice model via regulating NF-kB and NLRP3
@@ -631,7 +606,7 @@ inflammasome pathway,” *Biomedicine & Pharmacotherapy*, vol. 151, p.
 
 <div id="ref-gonzalezabuin_2015_procyanidins" class="csl-entry">
 
-<span class="csl-left-margin">\[4\]
+<span class="csl-left-margin">\[6\]
 </span><span class="csl-right-inline">N. Gonzalez-Abuin, M. Pinent, A.
 Casanova-Marti, L. Arola, M. Blay, and A. Ardevol, “Procyanidins and
 their healthy protective effects against type 2 diabetes,” *Current
@@ -640,25 +615,18 @@ Medicinal Chemistry*, vol. 22, pp. 39–50, 2015, doi:
 
 </div>
 
-<div id="ref-a2025_poma" class="csl-entry">
-
-<span class="csl-left-margin">\[5\]
-</span><span class="csl-right-inline">“POMA,” *Bioconductor*, 2025, doi:
-[10.1371/journal.pcbi.1009148\>](https://doi.org/10.1371/journal.pcbi.1009148>).</span>
-
-</div>
-
 <div id="ref-metabolomicsworkbenchr_2025" class="csl-entry">
 
-<span class="csl-left-margin">\[6\]
-</span><span class="csl-right-inline">*Bioconductor*. 2025. Available:
-<https://www.bioconductor.org/packages/release/bioc/html/metabolomicsWorkbenchR.html></span>
+<span class="csl-left-margin">\[7\]
+</span><span class="csl-right-inline">“Lloyd GR, weber RJM (2024).
+metabolomicsWorkbenchR: Metabolomics workbench in r. R package version
+1.16.0.” </span>
 
 </div>
 
 <div id="ref-le_cao_boitard_besse_2011" class="csl-entry">
 
-<span class="csl-left-margin">\[7\]
+<span class="csl-left-margin">\[8\]
 </span><span class="csl-right-inline">K.-A. Lê Cao, S. Boitard, and P.
 Besse, “Sparse PLS discriminant analysis: Biologically relevant feature
 selection and graphical displays for multiclass problems,” *BMC
