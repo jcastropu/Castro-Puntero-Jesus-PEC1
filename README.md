@@ -10,7 +10,7 @@ Este repositorio contiene el código y los datos utilizados en el análisis para
 - **SummarizedExperiment.Rda**: Objeto `SummarizedExperiment` con los datos procesados.
 - **SessionInfo.Rda**: Incluye la información de la sesión y los paquetes cargados.
 - **Análisis de datos ómicos (M0-157)-PEC1-Castro-Puntero-Jesus.pdf**: Documento de entrega de la PEC en PDF.
-- **informe.md**: Documento de entrega de la PEC para visualizar en GitHub.
+- **Análisis de datos ómicos (M0-157)-PEC1-Castro-Puntero-Jesus.md**: Documento de entrega de la PEC para visualizar en GitHub.
 - **BibliographyAO_PEC1.bib**: Contiene la bibliografía cargada en este informe
 
 También incluye archivos auxiliares para la ejecución del código.
